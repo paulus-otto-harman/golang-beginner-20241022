@@ -22,7 +22,7 @@ func main() {
 	k := make(chan models.Sensor, 3)
 	p := make(chan models.Sensor, 3)
 
-	go sensor("suhu", Green, s, 10)
+	go sensor("suhu", Green, s, 1)
 	go sensor("kelembaban", Blue, k, 2)
 	go sensor("tekanan", Yellow, p, 3)
 
@@ -37,23 +37,25 @@ func main() {
 	go pembacaSensor(k, ticker, done)
 	go pembacaSensor(p, ticker, done)
 
-	time.Sleep(20 * time.Second)
+	time.Sleep(30 * time.Second)
 
 }
 
 func pembacaSensor(ch chan models.Sensor, ticker *time.Ticker, done chan bool) {
-	for {
+	ended := false
+	for !ended {
 		select {
 		case t := <-ticker.C:
 			satelit := <-ch
-			fmt.Printf("detik ke %-55s pembacaan %s\n", t.String(), satelit.BacaData())
+			fmt.Printf("detik ke %-58s pembacaan %s\n", t.String(), satelit.BacaData())
 
-		//	responTerakhir = time.Now().Add(5 * time.Second)
-		//case <-time.After(responTerakhir):
+		//	responTerakhir = time.Now()
+		//case <-time.After(responTerakhir.Add(5 * time.Second)):
 
 		case <-time.After(5 * time.Second):
 			satelit := <-ch
-			fmt.Printf("detik ke %-55s sensor %s : %s\n", time.Now().String(), f(Bold, satelit.NamaSensor()), f(Color, "mengalami timeout 5 detik", Red))
+			fmt.Printf("detik ke %-58s sensor %s : %s\n", time.Now().String(), f(Bold, satelit.NamaSensor()), f(Color, "mengalami timeout 5 detik", Red))
+			ended = true
 		case <-done:
 			ticker.Stop()
 			return
@@ -70,7 +72,6 @@ const Bold = "\033[1m%s\033[0m"
 const Color = "\x1b[%dm%s\x1b[0m"
 
 func f(mode string, teks string, warna ...int) string {
-
 	switch {
 	case mode == Bold && len(warna) > 0:
 		return fmt.Sprintf(Color, warna[0], fmt.Sprintf(Bold, teks))
